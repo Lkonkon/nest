@@ -2,50 +2,70 @@ import { Injectable } from '@nestjs/common';
 import { CreateJogoDto } from './dto/create-jogo.dto';
 import { UpdateJogoDto } from './dto/update-jogo.dto';
 import { Jogo } from './entities/jogo.entity';
+import { PrismaService } from 'prisma/prisma.service';
 
 @Injectable()
 export class JogosService {
-  private jogos: Jogo[] = [
-    {
-      id: 1,
-      nome: 'Devil May Cry 5',
-      empresa: 'Capcom',
-      valor: '150',
-      lancamento: '2022-12-05',
-      genero: 'hack and slash',
-      consoles: 'PC, PS5, XBOX',
-      avaliacao: 9.5,
-    },
-    {
-      id: 2,
-      nome: 'Palworld',
-      empresa: 'Pocketpair',
-      valor: '80',
-      lancamento: '2024-01-19',
-      genero: 'Mundo aberto',
-      consoles:
-        'PlayStation 5, Xbox Series X e Series S, GeForce Now, Xbox One, Microsoft Windows, Mac OS',
-      avaliacao: 9,
-    },
-  ];
 
-  create(createJogoDto: CreateJogoDto) {
-    return 'This action adds a new jogo';
+  constructor(private prisma: PrismaService){}
+
+  
+  async create(createJogoDto: CreateJogoDto): Promise <Jogo> {
+    const jogo = await this.prisma.jogos.create({
+      data: createJogoDto
+    })
+    return this.mapToEntity(jogo);
   }
 
-  findAll() {
-    return this.jogos;
+  async  findAll(
+    nome?: string, 
+    valor?: string, 
+    empresa?: string, 
+    lancamento?: Date,
+    genero?: string, 
+    consoles?: string, 
+    avaliacao?: number,
+  ): Promise<Jogo[]>{
+    const jogos = await this.prisma.jogos.findMany({
+      where:{
+        ...(nome && { nome: { contains: nome, mode: 'insensitive'}}),
+        ...(valor && { valor: { contains: valor, mode: 'insensitive'}}),
+        ...(empresa && { empresa: { contains: empresa, mode: 'insensitive'}}),
+        ...(lancamento && { lancamento: new Date(lancamento)}),
+        ...(genero && { genero: { contains: genero, mode: 'insensitive'}}),
+        ...(consoles && { consoles: { contains: consoles, mode: 'insensitive'}}),
+        ...(avaliacao && { avaliacao }),
+      },
+      orderBy: { id: 'asc'}
+    });
+    return jogos.map((jogos) => this.mapToEntity(jogos));
   }
 
-  findOne(id: number): Jogo | undefined {
-    return this.jogos.find((jogos) => jogos.id === id);
+  private mapToEntity(jogo:any): Jogo{
+    return{
+      id: jogo.id,
+      nome: jogo.nome,
+      empresa: jogo.empresa,
+      valor: jogo.valor,
+      lancamento: jogo.lancamento,
+      genero: jogo.genero,
+      consoles: jogo.consoles,
+      avaliacao: jogo.avaliacao 
+    }
   }
 
-  update(id: number, updateJogoDto: UpdateJogoDto) {
-    return `This action updates a #${id} jogo`;
+  async findOne(id: number): Promise<Jogo | null> {
+    const jogos = await this.prisma.jogos.findUnique({ where :{id}});
+    return jogos ? this.mapToEntity(jogos) : null;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} jogo`;
+  async update(id: number, updateJogoDto: UpdateJogoDto): Promise<Jogo> {
+    const jogos = await this.prisma.jogos.update({ where :{id}, data: updateJogoDto});
+    return this.mapToEntity(jogos);
+  }
+
+  async remove(id: number): Promise<Jogo> {
+    const jogos = await this.prisma.jogos.delete({ where :{id}});
+    return this.mapToEntity(jogos)
   }
 }
