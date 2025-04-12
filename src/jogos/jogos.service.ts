@@ -12,8 +12,16 @@ export class JogosService {
   
   async create(createJogoDto: CreateJogoDto): Promise <Jogo> {
     const jogo = await this.prisma.jogos.create({
-      data: createJogoDto
-    })
+      data: {
+        nome: createJogoDto.nome,
+        empresa: createJogoDto.empresa,
+        valor: createJogoDto.valor,
+        lancamento: new Date(createJogoDto.lancamento),
+        genero: createJogoDto.genero,
+        consoles: createJogoDto.consoles,
+        avaliacao: createJogoDto.avaliacao,
+      }
+    });
     return this.mapToEntity(jogo);
   }
 
