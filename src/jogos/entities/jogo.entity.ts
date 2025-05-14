@@ -3,7 +3,7 @@ export class Jogo {
   nome: string;
   empresa: string;
   valor: string;
-  lancamento: string;
+  lancamento: Date;
   genero: string;
   consoles: string;
   avaliacao: number;
